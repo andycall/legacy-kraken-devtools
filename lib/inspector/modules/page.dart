@@ -235,7 +235,7 @@ class InspectPageModule extends UIInspectorModule {
   bool _isFramingScreenCast = false;
 
   void _frameScreenCast(Duration timeStamp) {
-    Element root = elementManager.getRootElement();
+    Element root = elementManager.viewportElement;
     root.toBlob().then((Uint8List screenShot) {
       String encodedImage = base64Encode(screenShot);
       _lastSentSessionID = timeStamp.inMilliseconds;

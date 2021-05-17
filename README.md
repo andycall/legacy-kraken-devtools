@@ -1,14 +1,16 @@
-# devtools
+# Kraken Devtools
 
-A kraken plugin which open a service to support Chrome DevTools for debugging.
+A kraken plugin which starting a service to provide Chrome DevTools support.
 
 ## Install
 
 First, add `kraken_devtools` as a dependency in your pubspec.yaml file.
 
 ```dart
+import 'package:kraken_devtools/kraken_devtools.dart';
+
 Kraken kraken = Kraken(
-  bundlePath: 'https://kraken.oss-cn-hangzhou.aliyuncs.com/demo/fed.js',
+  // ...
   devToolsService: ChromeDevToolsService(),
 );
 ```
@@ -17,9 +19,9 @@ Kraken kraken = Kraken(
 
 When kraken app started, there will be logs printed in terminal like below.
 ```
-flutter: Kraken DevTool listening at ws://172.20.10.2:9222
+flutter: Kraken DevTool listening at ws://127.0.0.1:9222
 flutter: Open Chrome/Edge and paste following url to your navigator:
-flutter:     devtools://devtools/bundled/inspector.html?ws=172.20.10.2:9222
+flutter:     devtools://devtools/bundled/inspector.html?ws=127.0.0.1:9222
 ```
 
 Open Chrome/Edge and paste url started with 'devtools://' to your navigator.

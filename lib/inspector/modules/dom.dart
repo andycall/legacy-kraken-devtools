@@ -69,7 +69,7 @@ class InspectDOMModule extends UIInspectorModule {
 
   /// https://chromedevtools.github.io/devtools-protocol/tot/DOM/#method-getDocument
   void onGetDocument(int id, String method, Map<String, dynamic> params) {
-    Node root = elementManager.getRootElement();
+    Node root = elementManager.document;
     InspectorDocument document = InspectorDocument(
       InspectorNode(root)
     );
