@@ -127,7 +127,7 @@ class InspectCSSModule extends UIInspectorModule {
           startLine: 0,
           startColumn: cssText.length,
           endLine: 0,
-          endColumn: cssText.length + _cssText.length,
+          endColumn: cssText.length + _cssText.length + 1,
         ),
       );
       cssText += '$_cssText; ';
@@ -184,8 +184,8 @@ class InspectCSSModule extends UIInspectorModule {
     }
 
     // Calc computed size.
-    Map<String, dynamic> boundingClientRect = element.boundingClientRect.toJSON();
-    boundingClientRect.forEach((String name, value) {
+    Map<String, dynamic> boundingClientRect = element.boundingClientRect?.toJSON();
+    boundingClientRect?.forEach((String name, value) {
       computedStyle.add(CSSComputedStyleProperty(name: name, value: '${value}px'));
     });
 

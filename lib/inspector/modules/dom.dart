@@ -65,11 +65,12 @@ class InspectDOMModule extends UIInspectorModule {
     if (node != null) {
       inspectedNode = node;
     }
+    sendToFrontend(id, null);
   }
 
   /// https://chromedevtools.github.io/devtools-protocol/tot/DOM/#method-getDocument
   void onGetDocument(int id, String method, Map<String, dynamic> params) {
-    Node root = elementManager.document;
+    Node root = elementManager.document.documentElement;
     InspectorDocument document = InspectorDocument(
       InspectorNode(root)
     );
