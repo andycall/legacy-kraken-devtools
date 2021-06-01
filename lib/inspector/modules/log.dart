@@ -8,7 +8,7 @@ class InspectorLogModule extends IsolateInspectorModule {
   String get name => 'Log';
 
   @override
-  void receiveFromFrontend(int id, String method, Map<String, dynamic> params) {
+  void receiveFromFrontend(int? id, String method, Map<String, dynamic>? params) {
     callNativeInspectorMethod(id, method, params);
   }
 }

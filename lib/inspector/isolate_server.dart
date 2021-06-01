@@ -14,82 +14,82 @@ import '../bridge/platform.dart';
 const String CONTENT_TYPE = 'Content-Type';
 const String CONTENT_LENGTH = 'Content-Length';
 
-typedef MessageCallback = void Function(Map<String, dynamic>);
+typedef MessageCallback = void Function(Map<String, dynamic>?);
 
-Map<int, IsolateInspectorServer> _inspectorServerMap = Map();
+Map<int, IsolateInspectorServer?> _inspectorServerMap = Map();
 
-typedef Native_InspectorMessageCallback = Void Function(Pointer<Void> rpcSession, Pointer<Utf8> message);
-typedef Dart_InspectorMessageCallback = void Function(Pointer<Void> rpcSession, Pointer<Utf8> message);
-typedef Native_RegisterInspectorMessageCallback = Void Function(
+typedef NativeInspectorMessageCallback = Void Function(Pointer<Void> rpcSession, Pointer<Utf8> message);
+typedef DartInspectorMessageCallback = void Function(Pointer<Void> rpcSession, Pointer<Utf8> message);
+typedef NativeRegisterInspectorMessageCallback = Void Function(
     Int32 contextId,
     Pointer<Void> rpcSession,
-    Pointer<NativeFunction<Native_InspectorMessageCallback>> inspectorMessageCallback);
+    Pointer<NativeFunction<NativeInspectorMessageCallback>> inspectorMessageCallback);
 
-typedef Native_AttachInspector = Void Function(Int32);
-typedef Dart_AttachInspector = void Function(int);
+typedef NativeAttachInspector = Void Function(Int32);
+typedef DartAttachInspector = void Function(int);
 
 void _registerInspectorMessageCallback(
     int contextId,
     Pointer<Void> rpcSession,
-    Pointer<NativeFunction<Native_InspectorMessageCallback>> inspectorMessageCallback) {
-  IsolateInspectorServer server = _inspectorServerMap[contextId];
+    Pointer<NativeFunction<NativeInspectorMessageCallback>> inspectorMessageCallback) {
+  IsolateInspectorServer? server = _inspectorServerMap[contextId];
   if (server == null) {
     print('Internal error: can not get inspector server from contextId: $contextId');
     return;
   }
-  Dart_InspectorMessageCallback nativeCallback = inspectorMessageCallback.asFunction();
+  DartInspectorMessageCallback nativeCallback = inspectorMessageCallback.asFunction();
   server.nativeInspectorMessageHandler = (String message) {
-    nativeCallback(rpcSession, Utf8.toUtf8(message));
+    nativeCallback(rpcSession, (message).toNativeUtf8());
   };
 }
 
-typedef Native_InspectorMessage = Void Function(Int32 contextId, Pointer<Utf8>);
+typedef NativeInspectorMessage = Void Function(Int32 contextId, Pointer<Utf8>);
 
 void _onInspectorMessage(int contextId, Pointer<Utf8> message) {
-  IsolateInspectorServer server = _inspectorServerMap[contextId];
+  IsolateInspectorServer? server = _inspectorServerMap[contextId];
   if (server == null) {
     print('Internal error: can not get inspector server from contextId: $contextId');
     return;
   }
-  String data = Utf8.fromUtf8(message);
+  String data = (message).toDartString();
   server.sendRawJSONToFrontend(data);
 }
 
-typedef Native_PostTaskToUIThread = Void Function(Int32 contextId, Pointer<Void> context, Pointer<Void> callback);
+typedef NativePostTaskToUIThread = Void Function(Int32 contextId, Pointer<Void> context, Pointer<Void> callback);
 
 void _postTaskToUIThread(int contextId, Pointer<Void> context, Pointer<Void> callback) {
-  IsolateInspectorServer server = _inspectorServerMap[contextId];
+  IsolateInspectorServer? server = _inspectorServerMap[contextId];
   if (server == null) {
     print('Internal error: can not get inspector server from contextId: $contextId');
     return;
   }
-  server.isolateToMainStream.send(InspectorPostTaskMessage(context.address, callback.address));
+  server.isolateToMainStream!.send(InspectorPostTaskMessage(context.address, callback.address));
 }
 
-typedef Native_RegisterDartMethods = Void Function(Pointer<Uint64> methodBytes, Int32 length);
-typedef Dart_RegisterDartMethods = void Function(Pointer<Uint64> methodBytes, int length);
+typedef NativeRegisterDartMethods = Void Function(Pointer<Uint64> methodBytes, Int32 length);
+typedef DartRegisterDartMethods = void Function(Pointer<Uint64> methodBytes, int length);
 
-typedef Native_DispatchInspectorTask = Void Function(Int32 contextId, Pointer<Void> context, Pointer<Void> callback);
-typedef Dart_DispatchInspectorTask = void Function(int contextId, Pointer<Void> context, Pointer<Void> callback);
+typedef NativeDispatchInspectorTask = Void Function(Int32 contextId, Pointer<Void> context, Pointer<Void> callback);
+typedef DartDispatchInspectorTask = void Function(int? contextId, Pointer<Void> context, Pointer<Void> callback);
 
 void attachInspector(int contextId) {
-  final Dart_AttachInspector _attachInspector = nativeDynamicLibrary
-      .lookup<NativeFunction<Native_AttachInspector>>('attachInspector')
+  final DartAttachInspector _attachInspector = nativeDynamicLibrary
+      .lookup<NativeFunction<NativeAttachInspector>>('attachInspector')
       .asFunction();
   _attachInspector(contextId);
 }
 
 void initInspectorServerNativeBinding(int contextId) {
-  final Dart_RegisterDartMethods _registerInspectorServerDartMethods =
+  final DartRegisterDartMethods _registerInspectorServerDartMethods =
       nativeDynamicLibrary
-          .lookup<NativeFunction<Native_RegisterDartMethods>>(
+          .lookup<NativeFunction<NativeRegisterDartMethods>>(
               'registerInspectorDartMethods')
           .asFunction();
-  final Pointer<NativeFunction<Native_InspectorMessage>>
+  final Pointer<NativeFunction<NativeInspectorMessage>>
       _nativeInspectorMessage = Pointer.fromFunction(_onInspectorMessage);
-  final Pointer<NativeFunction<Native_RegisterInspectorMessageCallback>>
+  final Pointer<NativeFunction<NativeRegisterInspectorMessageCallback>>
       _nativeRegisterInspectorMessageCallback = Pointer.fromFunction(_registerInspectorMessageCallback);
-  final Pointer<NativeFunction<Native_PostTaskToUIThread>> _nativePostTaskToUIThread = Pointer.fromFunction(_postTaskToUIThread);
+  final Pointer<NativeFunction<NativePostTaskToUIThread>> _nativePostTaskToUIThread = Pointer.fromFunction(_postTaskToUIThread);
 
   final List<int> _dartNativeMethods = [
     _nativeInspectorMessage.address,
@@ -97,7 +97,7 @@ void initInspectorServerNativeBinding(int contextId) {
     _nativePostTaskToUIThread.address
   ];
 
-  Pointer<Uint64> bytes = allocate<Uint64>(count: _dartNativeMethods.length);
+  Pointer<Uint64> bytes = malloc.allocate<Uint64>(_dartNativeMethods.length * sizeOf<Uint64>());
   Uint64List nativeMethodList = bytes.asTypedList(_dartNativeMethods.length);
   nativeMethodList.setAll(0, _dartNativeMethods);
 
@@ -107,20 +107,20 @@ void initInspectorServerNativeBinding(int contextId) {
 void serverIsolateEntryPoint(SendPort isolateToMainStream) {
   ReceivePort mainToIsolateStream = ReceivePort();
   isolateToMainStream.send(mainToIsolateStream.sendPort);
-  IsolateInspectorServer server;
-  int mainIsolateJSContextId;
+  IsolateInspectorServer? server;
+  int? mainIsolateJSContextId;
 
   mainToIsolateStream.listen((data) {
     if (data is InspectorServerInit) {
       server = IsolateInspectorServer(data.port, data.address, data.bundleURL);
-      server._isolateToMainStream = isolateToMainStream;
-      server.onStarted = () {
+      server!._isolateToMainStream = isolateToMainStream;
+      server!.onStarted = () {
         isolateToMainStream.send(InspectorServerStart());
       };
-      server.onFrontendMessage = (Map<String, dynamic> frontEndMessage) {
-        int id = frontEndMessage['id'];
+      server!.onFrontendMessage = (Map<String, dynamic>? frontEndMessage) {
+        int? id = frontEndMessage!['id'];
         String _method = frontEndMessage['method'];
-        Map<String, dynamic> params = frontEndMessage['params'];
+        Map<String, dynamic>? params = frontEndMessage['params'];
 
         List<String> moduleMethod = _method.split('.');
         String module = moduleMethod[0];
@@ -128,23 +128,23 @@ void serverIsolateEntryPoint(SendPort isolateToMainStream) {
 
         // Runtime、Log、Debugger methods should handled on inspector isolate.
         if (module == 'Runtime' || module == 'Log' || module == 'Debugger') {
-          server.messageRouter(id, module, method, params);
+          server!.messageRouter(id, module, method, params);
         } else {
           isolateToMainStream.send(InspectorFrontEndMessage(id, module, method, params));
         }
       };
-      server.start();
+      server!.start();
       _inspectorServerMap[data.contextId] = server;
       mainIsolateJSContextId = data.contextId;
       initInspectorServerNativeBinding(data.contextId);
       attachInspector(data.contextId);
-    } else if (server != null && server.connected) {
+    } else if (server != null && server!.connected) {
       if (data is InspectorEvent) {
-        server.sendEventToFrontend(data);
+        server!.sendEventToFrontend(data);
       } else if (data is InspectorMethodResult) {
-        server.sendToFrontend(data.id, data.result);
+        server!.sendToFrontend(data.id, data.result);
       } else if (data is InspectorPostTaskMessage) {
-        server._dispatchInspectorTask(mainIsolateJSContextId, Pointer.fromAddress(data.context), Pointer.fromAddress(data.callback));
+        server!._dispatchInspectorTask(mainIsolateJSContextId, Pointer.fromAddress(data.context), Pointer.fromAddress(data.callback));
       } else if (data is InspectorReload) {
         attachInspector(data.contextId);
       }
@@ -164,21 +164,21 @@ class IsolateInspectorServer {
   final String bundleURL;
   int port;
 
-  VoidCallback onStarted;
-  MessageCallback onFrontendMessage;
-  HttpServer _httpServer;
-  WebSocket _ws;
+  VoidCallback? onStarted;
+  MessageCallback? onFrontendMessage;
+  late HttpServer _httpServer;
+  WebSocket? _ws;
 
-  SendPort _isolateToMainStream;
-  SendPort get isolateToMainStream => _isolateToMainStream;
+  SendPort? _isolateToMainStream;
+  SendPort? get isolateToMainStream => _isolateToMainStream;
 
-  NativeInspectorMessageHandler nativeInspectorMessageHandler;
+  NativeInspectorMessageHandler? nativeInspectorMessageHandler;
 
   final Map<String, IsolateInspectorModule> moduleRegistrar = {};
 
-  void messageRouter(int id, String module, String method, Map<String, dynamic> params) {
+  void messageRouter(int? id, String module, String method, Map<String, dynamic>? params) {
     if (moduleRegistrar.containsKey(module)) {
-      moduleRegistrar[module].invoke(id, method, params);
+      moduleRegistrar[module]!.invoke(id, method, params);
     }
   }
 
@@ -186,8 +186,8 @@ class IsolateInspectorServer {
     moduleRegistrar[module.name] = module;
   }
 
-  final Dart_DispatchInspectorTask _dispatchInspectorTask = nativeDynamicLibrary
-      .lookup<NativeFunction<Native_DispatchInspectorTask>>('dispatchInspectorTask')
+  final DartDispatchInspectorTask _dispatchInspectorTask = nativeDynamicLibrary
+      .lookup<NativeFunction<NativeDispatchInspectorTask>>('dispatchInspectorTask')
       .asFunction();
 
   /// InspectServer has connected frontend.
@@ -195,7 +195,7 @@ class IsolateInspectorServer {
 
   int _bindServerRetryTime = 0;
 
-  void _bindServer(int port) async {
+  Future<void> _bindServer(int port) async {
     try {
       _httpServer = await HttpServer.bind(address, port);
       this.port = port;
@@ -213,21 +213,21 @@ class IsolateInspectorServer {
     await _bindServer(port);
 
     if (onStarted != null) {
-      onStarted();
+      onStarted!();
     }
 
     await for (HttpRequest request in _httpServer) {
       HttpHeaders headers = request.headers;
       if (headers.value('upgrade') == 'websocket') {
         _ws = await WebSocketTransformer.upgrade(request);
-        _ws.listen(onWebSocketRequest);
+        _ws!.listen(onWebSocketRequest);
       } else {
         await onHTTPRequest(request);
       }
     }
   }
 
-  void sendToFrontend(int id, Map result) {
+  void sendToFrontend(int? id, Map? result) {
     assert(_ws != null, 'WebSocket should connect.');
 
     String data = jsonEncode({
@@ -235,22 +235,22 @@ class IsolateInspectorServer {
       // Give an empty object for response.
       'result': result ?? {},
     });
-    _ws.add(data);
+    _ws!.add(data);
   }
 
   void sendEventToFrontend(InspectorEvent event) {
     assert(_ws != null, 'WebSocket should connect.');
-    _ws.add(jsonEncode(event));
+    _ws!.add(jsonEncode(event));
   }
 
   void sendRawJSONToFrontend(String message) {
     assert(_ws != null, 'WebSocket should connect.');
-    _ws.add(message);
+    _ws!.add(message);
   }
 
-  Map<String, dynamic> _parseMessage(message) {
+  Map<String, dynamic>? _parseMessage(message) {
     try {
-      Map<String, dynamic> data = jsonDecode(message);
+      Map<String, dynamic>? data = jsonDecode(message);
       return data;
     } catch (err) {
       print('Error while decoding frontend message: $message');
@@ -260,14 +260,14 @@ class IsolateInspectorServer {
 
   void onWebSocketRequest(message) {
     if (message is String) {
-      Map<String, dynamic> data = _parseMessage(message);
+      Map<String, dynamic>? data = _parseMessage(message);
       if (onFrontendMessage != null) {
-        onFrontendMessage(data);
+        onFrontendMessage!(data);
       }
     }
   }
 
-  void onHTTPRequest(HttpRequest request) async {
+  Future<void> onHTTPRequest(HttpRequest request) async {
     switch (request.requestedUri.path) {
       case '/json/version':
         onRequestVersion(request);
@@ -317,7 +317,7 @@ class IsolateInspectorServer {
 
   void onRequestList(HttpRequest request) {
     request.response.headers.clear();
-    String entryURL = '${address}:${port}';
+    String entryURL = '$address:$port';
     _writeJSONObject(request, [
       {
         'description': '',
@@ -356,6 +356,6 @@ class IsolateInspectorServer {
     onFrontendMessage = null;
 
     await _ws?.close();
-    await _httpServer?.close();
+    await _httpServer.close();
   }
 }

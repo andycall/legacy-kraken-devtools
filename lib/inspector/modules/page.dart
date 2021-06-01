@@ -30,19 +30,19 @@ class Frame extends JSONEncodable {
   final String id;
 
   // Parent frame identifier.
-  String parentId;
+  String? parentId;
 
   // Identifier of the loader associated with this frame.
   final String loaderId;
 
   // Frame's name as specified in the tag.
-  String name;
+  String? name;
 
   // Frame document's URL without fragment.
   final String url;
 
   // Frame document's URL fragment including the '#'.
-  String urlFragment;
+  String? urlFragment;
 
   // Frame document's registered domain, taking the public suffixes list into account. Extracted from the Frame's url. Example URLs: http://www.google.com/file.html -> "google.com" http://a.b.co.uk/file.html -> "b.co.uk"
   final String domainAndRegistry;
@@ -54,10 +54,10 @@ class Frame extends JSONEncodable {
   final String mimeType;
 
   // If the frame failed to load, this contains the URL that could not be loaded. Note that unlike url above, this URL may contain a fragment.
-  String unreachableUrl;
+  String? unreachableUrl;
 
   // Indicates whether this frame was tagged as an ad.
-  String AdFrameType;
+  String? AdFrameType;
 
   // Indicates whether the main document is a secure context and explains why that is the case.
   final String secureContextType;
@@ -118,16 +118,16 @@ class FrameResource extends JSONEncodable {
   final String mimeType;
 
   // last-modified timestamp as reported by server.
-  int lastModified;
+  int? lastModified;
 
   // Resource content size.
-  int contentSize;
+  int? contentSize;
 
   // True if the resource failed to load.
-  bool failed;
+  bool? failed;
 
   // True if the resource was canceled during loading.
-  bool canceled;
+  bool? canceled;
 
   FrameResource(this.url, this.type, this.mimeType,
       {this.lastModified, this.contentSize, this.failed, this.canceled});
@@ -149,7 +149,7 @@ class FrameResourceTree extends JSONEncodable {
   final Frame frame;
 
   // Child frames.
-  List<FrameResourceTree> childFrames;
+  List<FrameResourceTree>? childFrames;
 
   // Information about frame resources.
   final List<FrameResource> resources;
@@ -186,15 +186,15 @@ enum ResourceType {
 
 class InspectPageModule extends UIInspectorModule {
 
-  ElementManager get elementManager => devTool.controller.view.elementManager;
+  ElementManager get elementManager => devTool!.controller!.view.elementManager;
 
-  InspectPageModule(ChromeDevToolsService devTool): super(devTool);
+  InspectPageModule(ChromeDevToolsService? devTool): super(devTool);
 
   @override
   String get name => 'Page';
 
   @override
-  void receiveFromFrontend(int id, String method, Map<String, dynamic> params) {
+  void receiveFromFrontend(int? id, String method, Map<String, dynamic>? params) {
     switch (method) {
       case 'startScreencast':
         sendToFrontend(id, null);
@@ -206,11 +206,11 @@ class InspectPageModule extends UIInspectorModule {
         break;
       case 'screencastFrameAck':
         sendToFrontend(id, null);
-        handleScreencastFrameAck(params);
+        handleScreencastFrameAck(params!);
         break;
       case 'getResourceContent':
         sendToFrontend(id, JSONEncodableMap({
-          'content': devTool.controller.view.elementManager.controller.bundle.content,
+          'content': devTool!.controller!.view.elementManager.controller.bundle!.content,
           'base64Encoded': false
         }));
         break;
@@ -231,7 +231,7 @@ class InspectPageModule extends UIInspectorModule {
     }
   }
 
-  int _lastSentSessionID;
+  int? _lastSentSessionID;
   bool _isFramingScreenCast = false;
 
   void _frameScreenCast(Duration timeStamp) {
@@ -250,7 +250,7 @@ class InspectPageModule extends UIInspectorModule {
             root.getOffsetY(),
             timestamp: timeStamp.inMilliseconds,
           ),
-          _lastSentSessionID));
+          _lastSentSessionID!));
 
       sendEventToFrontend(event);
     });
@@ -258,8 +258,8 @@ class InspectPageModule extends UIInspectorModule {
 
   void startScreenCast() {
     _isFramingScreenCast = true;
-    SchedulerBinding.instance.addPostFrameCallback(_frameScreenCast);
-    SchedulerBinding.instance.scheduleFrame();
+    SchedulerBinding.instance!.addPostFrameCallback(_frameScreenCast);
+    SchedulerBinding.instance!.scheduleFrame();
   }
 
   void stopScreenCast() {
@@ -269,9 +269,9 @@ class InspectPageModule extends UIInspectorModule {
   /// Avoiding frame blocking, confirm frontend has ack last frame,
   /// and then send next frame.
   void handleScreencastFrameAck(Map<String, dynamic> params) {
-    int ackSessionID = params['sessionId'];
+    int? ackSessionID = params['sessionId'];
     if (ackSessionID == _lastSentSessionID && _isFramingScreenCast) {
-      SchedulerBinding.instance.addPostFrameCallback(_frameScreenCast);
+      SchedulerBinding.instance!.addPostFrameCallback(_frameScreenCast);
     }
   }
 }
@@ -304,7 +304,7 @@ class ScreencastFrameMetadata implements JSONEncodable {
   final num deviceHeight;
   final num scrollOffsetX;
   final num scrollOffsetY;
-  final num timestamp;
+  final num? timestamp;
 
   ScreencastFrameMetadata(
       this.offsetTop,

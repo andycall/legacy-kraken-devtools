@@ -17,7 +17,7 @@ abstract class _InspectorModule {
 
   bool _enable = false;
 
-  void invoke(int id, String method, Map<String, dynamic> params) {
+  void invoke(int? id, String method, Map<String, dynamic>? params) {
     if (method == 'enable') {
       _enable = true;
       sendToFrontend(id, null);
@@ -31,23 +31,23 @@ abstract class _InspectorModule {
     }
   }
 
-  void sendToFrontend(int id, JSONEncodable result);
+  void sendToFrontend(int? id, JSONEncodable? result);
   void sendEventToFrontend(InspectorEvent event);
-  void receiveFromFrontend(int id, String method, Map<String, dynamic> params);
+  void receiveFromFrontend(int? id, String method, Map<String, dynamic>? params);
 }
 
 // Inspector modules working on flutter.ui thread.
 abstract class UIInspectorModule extends _InspectorModule {
-  final ChromeDevToolsService devTool;
+  final ChromeDevToolsService? devTool;
   UIInspectorModule(this.devTool);
 
-  void sendToFrontend(int id, JSONEncodable result) {
-    devTool.isolateServerPort.send(InspectorMethodResult(id, result?.toJson()));
+  void sendToFrontend(int? id, JSONEncodable? result) {
+    devTool!.isolateServerPort!.send(InspectorMethodResult(id, result?.toJson()));
   }
   void sendEventToFrontend(InspectorEvent event) {
-    devTool.isolateServerPort.send(event);
+    devTool!.isolateServerPort!.send(event);
   }
-  void receiveFromFrontend(int id, String method, Map<String, dynamic> params);
+  void receiveFromFrontend(int? id, String method, Map<String, dynamic>? params);
 }
 
 // Inspector modules working on dart isolates
@@ -56,7 +56,7 @@ abstract class IsolateInspectorModule extends _InspectorModule {
 
   final IsolateInspectorServer server;
 
-  void sendToFrontend(int id, JSONEncodable result) {
+  void sendToFrontend(int? id, JSONEncodable? result) {
     server.sendToFrontend(id, result?.toJson());
   }
 
@@ -64,10 +64,10 @@ abstract class IsolateInspectorModule extends _InspectorModule {
     server.sendEventToFrontend(event);
   }
 
-  void callNativeInspectorMethod(int id, String method, Map<String, dynamic> params) {
+  void callNativeInspectorMethod(int? id, String method, Map<String, dynamic>? params) {
     assert(server.nativeInspectorMessageHandler != null);
-    server.nativeInspectorMessageHandler(jsonEncode({'id': id, 'method': name + '.' + method, 'params': params}));
+    server.nativeInspectorMessageHandler!(jsonEncode({'id': id, 'method': name + '.' + method, 'params': params}));
   }
 
-  void receiveFromFrontend(int id, String method, Map<String, dynamic> params);
+  void receiveFromFrontend(int? id, String method, Map<String, dynamic>? params);
 }

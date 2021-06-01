@@ -19,7 +19,7 @@ class DOMUpdatedEvent extends InspectorEvent {
   String get method => 'DOM.documentUpdated';
 
   @override
-  JSONEncodable get params => null;
+  JSONEncodable? get params => null;
 }
 
 typedef NativeInspectorMessageHandler = void Function(String message);
@@ -38,15 +38,15 @@ class InspectorServerStart {
 
 class InspectorFrontEndMessage {
   InspectorFrontEndMessage(this.id, this.module, this.method, this.params);
-  int id;
+  int? id;
   String module;
   String method;
-  final Map<String, dynamic> params;
+  final Map<String, dynamic>? params;
 }
 
 class InspectorMethodResult {
-  final int id;
-  final Map result;
+  final int? id;
+  final Map? result;
   InspectorMethodResult(this.id, this.result);
 }
 
@@ -62,7 +62,7 @@ class InspectorReload {
 }
 
 class UIInspector {
-  ChromeDevToolsService devTool;
+  ChromeDevToolsService? devTool;
   final Map<String, UIInspectorModule> moduleRegistrar = {};
 
   UIInspector(this.devTool) {
@@ -86,14 +86,14 @@ class UIInspector {
     print('    $inspectorURL');
   }
 
-  void messageRouter(int id, String module, String method, Map<String, dynamic> params) {
+  void messageRouter(int? id, String module, String method, Map<String, dynamic>? params) {
     if (moduleRegistrar.containsKey(module)) {
-      moduleRegistrar[module].invoke(id, method, params);
+      moduleRegistrar[module]!.invoke(id, method, params);
     }
   }
 
   void onDOMTreeChanged() {
-    devTool.isolateServerPort?.send(DOMUpdatedEvent());
+    devTool!.isolateServerPort?.send(DOMUpdatedEvent());
   }
 
   void dispose() {
@@ -106,12 +106,10 @@ class UIInspector {
         includeLoopback: false, type: InternetAddressType.IPv4);
 
     String result = INSPECTOR_DEFAULT_ADDRESS;
-    if (interfaces != null) {
-      for (NetworkInterface interface in interfaces) {
-        if (interface.name == 'en0' || interface.name == 'eth0' || interface.name == 'wlan0') {
-          result = interface.addresses.first.address;
-          break;
-        }
+    for (NetworkInterface interface in interfaces) {
+      if (interface.name == 'en0' || interface.name == 'eth0' || interface.name == 'wlan0') {
+        result = interface.addresses.first.address;
+        break;
       }
     }
 
@@ -128,7 +126,7 @@ abstract class JSONEncodable {
 
 abstract class InspectorEvent extends JSONEncodable {
   String get method;
-  JSONEncodable get params;
+  JSONEncodable? get params;
   InspectorEvent();
 
   Map toJson() {
