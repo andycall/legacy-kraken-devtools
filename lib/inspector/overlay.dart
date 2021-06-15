@@ -12,8 +12,7 @@ const Color _kHighlightedRenderObjectBorderColor = Color.fromARGB(128, 64, 64, 1
 
 class InspectorOverlayLayer extends Layer {
   /// Creates a layer that displays the inspector overlay.
-  InspectorOverlayLayer({ @required this.overlayRect })
-      : assert(overlayRect != null) {
+  InspectorOverlayLayer({ required this.overlayRect }) {
     bool inDebugMode = kDebugMode || kProfileMode;
     if (inDebugMode == false) {
       throw FlutterError.fromParts(<DiagnosticsNode>[
@@ -32,7 +31,7 @@ class InspectorOverlayLayer extends Layer {
   /// (as described at [Layer]).
   final Rect overlayRect;
 
-  Picture _picture;
+  late Picture _picture;
 
   @override
   void addToScene(SceneBuilder builder, [Offset layerOffset = Offset.zero]) {

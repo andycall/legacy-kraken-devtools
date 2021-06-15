@@ -13,18 +13,18 @@ import 'inspector/isolate_server.dart';
 import 'package:kraken/kraken.dart';
 import 'package:kraken/bridge.dart';
 
-void spawnIsolateInspectorServer(ChromeDevToolsService devTool, KrakenController controller, { int port = INSPECTOR_DEFAULT_PORT, String address }) {
+void spawnIsolateInspectorServer(ChromeDevToolsService devTool, KrakenController controller, { int port = INSPECTOR_DEFAULT_PORT, String? address }) {
   ReceivePort serverIsolateReceivePort = ReceivePort();
 
   serverIsolateReceivePort.listen((data) {
     if (data is SendPort) {
       devTool._isolateServerPort = data;
       String bundleURL = controller.bundleURL ?? controller.bundlePath ?? '<EmbedBundle>';
-      devTool._isolateServerPort.send(InspectorServerInit(controller.view.contextId, port, '0.0.0.0', bundleURL));
+      devTool._isolateServerPort!.send(InspectorServerInit(controller.view.contextId, port, '0.0.0.0', bundleURL));
     } else if (data is InspectorFrontEndMessage) {
-      devTool.uiInspector.messageRouter(data.id, data.module, data.method, data.params);
+      devTool.uiInspector!.messageRouter(data.id, data.module, data.method, data.params);
     } else if (data is InspectorServerStart) {
-      devTool.uiInspector.onServerStart(port);
+      devTool.uiInspector!.onServerStart(port);
     } else if (data is InspectorPostTaskMessage) {
       if (devTool.isReloading) return;
       dispatchUITask(controller.view.contextId, Pointer.fromAddress(data.context), Pointer.fromAddress(data.callback));
@@ -40,23 +40,23 @@ class ChromeDevToolsService extends DevToolsService {
   /// Design prevDevTool for reload page,
   /// do not use it in any other place.
   /// More detail see [InspectPageModule.handleReloadPage].
-  static ChromeDevToolsService prevDevTools;
+  static ChromeDevToolsService? prevDevTools;
 
   static Map<int, ChromeDevToolsService> _contextDevToolMap = Map();
-  static ChromeDevToolsService getDevToolOfContextId(int contextId) {
+  static ChromeDevToolsService? getDevToolOfContextId(int contextId) {
     return _contextDevToolMap[contextId];
   }
 
-  Isolate _isolateServerIsolate;
-  SendPort _isolateServerPort;
-  SendPort get isolateServerPort => _isolateServerPort;
+  late Isolate _isolateServerIsolate;
+  SendPort? _isolateServerPort;
+  SendPort? get isolateServerPort => _isolateServerPort;
 
   /// Used for debugger inspector.
-  UIInspector _uiInspector;
-  UIInspector get uiInspector => _uiInspector;
+  UIInspector? _uiInspector;
+  UIInspector? get uiInspector => _uiInspector;
 
-  KrakenController _controller;
-  KrakenController get controller => _controller;
+  KrakenController? _controller;
+  KrakenController? get controller => _controller;
 
   bool get isReloading => _reloading;
   bool _reloading = false;
@@ -67,7 +67,7 @@ class ChromeDevToolsService extends DevToolsService {
     _controller = null;
     _isolateServerPort = null;
     _isolateServerIsolate.kill();
-    _contextDevToolMap.remove(controller.view.contextId);
+    _contextDevToolMap.remove(controller!.view.contextId);
   }
 
   @override
@@ -77,7 +77,7 @@ class ChromeDevToolsService extends DevToolsService {
     registerUIDartMethodsToCpp();
     spawnIsolateInspectorServer(this, controller);
     _uiInspector = UIInspector(this);
-    controller.view.elementManager.debugDOMTreeChanged = uiInspector.onDOMTreeChanged;
+    controller.view.elementManager.debugDOMTreeChanged = uiInspector!.onDOMTreeChanged;
   }
 
   @override
@@ -88,7 +88,7 @@ class ChromeDevToolsService extends DevToolsService {
   @override
   void didReload() {
     _reloading = false;
-    controller.view.elementManager.debugDOMTreeChanged = _uiInspector.onDOMTreeChanged;
-    _isolateServerPort.send(InspectorReload(_controller.view.contextId));
+    controller!.view.elementManager.debugDOMTreeChanged = _uiInspector!.onDOMTreeChanged;
+    _isolateServerPort!.send(InspectorReload(_controller!.view.contextId));
   }
 }

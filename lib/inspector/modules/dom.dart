@@ -14,36 +14,36 @@ class InspectDOMModule extends UIInspectorModule {
   @override
   String get name => 'DOM';
 
-  ElementManager get elementManager => devTool.controller.view.elementManager;
-  InspectDOMModule(ChromeDevToolsService devTool): super(devTool);
+  ElementManager get elementManager => devTool!.controller!.view.elementManager;
+  InspectDOMModule(ChromeDevToolsService? devTool): super(devTool);
 
   @override
-  void receiveFromFrontend(int id, String method, Map<String, dynamic> params) {
+  void receiveFromFrontend(int? id, String method, Map<String, dynamic>? params) {
     switch (method) {
       case 'getDocument':
         onGetDocument(id, method, params);
         break;
       case 'getBoxModel':
-        onGetBoxModel(id, params);
+        onGetBoxModel(id, params!);
         break;
       case 'setInspectedNode':
-        onSetInspectedNode(id, params);
+        onSetInspectedNode(id, params!);
         break;
       case 'getNodeForLocation':
-        onGetNodeForLocation(id, params);
+        onGetNodeForLocation(id, params!);
         break;
     }
   }
 
-  void onGetNodeForLocation(int id, Map<String, dynamic> params) {
+  void onGetNodeForLocation(int? id, Map<String, dynamic> params) {
     int x = params['x'];
     int y = params['y'];
 
-    RenderBox rootRenderObject = elementManager.getRootRenderObject();
+    RenderBox rootRenderObject = elementManager.getRootRenderBox();
     BoxHitTestResult result = BoxHitTestResult();
     rootRenderObject.hitTest(result, position: Offset(x.toDouble(), y.toDouble()));
     if (result.path.first != null && result.path.first.target is RenderBoxModel) {
-      RenderBoxModel lastHitRenderBoxModel = result.path.first.target;
+      RenderBoxModel lastHitRenderBoxModel = result.path.first.target as RenderBoxModel;
       int targetId = lastHitRenderBoxModel.targetId;
       sendToFrontend(id, JSONEncodableMap({
         'backendId': targetId,
@@ -57,11 +57,11 @@ class InspectDOMModule extends UIInspectorModule {
 
   /// Enables console to refer to the node with given id via $x
   /// (see Command Line API for more details $x functions).
-  Node inspectedNode;
+  Node? inspectedNode;
 
-  void onSetInspectedNode(int id, Map<String, dynamic> params) {
+  void onSetInspectedNode(int? id, Map<String, dynamic> params) {
     int nodeId = params['nodeId'];
-    Node node = elementManager.getEventTargetByTargetId(nodeId);
+    Node? node = elementManager.getEventTargetByTargetId(nodeId);
     if (node != null) {
       inspectedNode = node;
     }
@@ -69,7 +69,7 @@ class InspectDOMModule extends UIInspectorModule {
   }
 
   /// https://chromedevtools.github.io/devtools-protocol/tot/DOM/#method-getDocument
-  void onGetDocument(int id, String method, Map<String, dynamic> params) {
+  void onGetDocument(int? id, String method, Map<String, dynamic>? params) {
     Node root = elementManager.document.documentElement;
     InspectorDocument document = InspectorDocument(
       InspectorNode(root)
@@ -78,16 +78,16 @@ class InspectDOMModule extends UIInspectorModule {
     sendToFrontend(id, document);
   }
 
-  void onGetBoxModel(int id, Map<String, dynamic> params) {
+  void onGetBoxModel(int? id, Map<String, dynamic> params) {
     int nodeId = params['nodeId'];
-    Element element = elementManager.getEventTargetByTargetId<Element>(nodeId);
+    Element? element = elementManager.getEventTargetByTargetId<Element>(nodeId);
 
     // BoxModel design to BorderBox in kraken.
-    if (element != null && element.renderBoxModel != null && element.renderBoxModel.hasSize) {
-      ui.Offset contentBoxOffset = element.renderBoxModel.localToGlobal(ui.Offset.zero);
+    if (element != null && element.renderBoxModel != null && element.renderBoxModel!.hasSize) {
+      ui.Offset contentBoxOffset = element.renderBoxModel!.localToGlobal(ui.Offset.zero);
 
-      int widthWithinBorder = element.renderBoxModel.size.width.toInt();
-      int heightWithinBorder = element.renderBoxModel.size.height.toInt();
+      int widthWithinBorder = element.renderBoxModel!.size.width.toInt();
+      int heightWithinBorder = element.renderBoxModel!.size.height.toInt();
       List<double> border = [
         contentBoxOffset.dx, contentBoxOffset.dy,
         contentBoxOffset.dx + widthWithinBorder, contentBoxOffset.dy,
@@ -95,22 +95,22 @@ class InspectDOMModule extends UIInspectorModule {
         contentBoxOffset.dx, contentBoxOffset.dy + heightWithinBorder,
       ];
       List<double> padding = [
-        border[0] + element.renderBoxModel.renderStyle.borderLeft, border[1] + element.renderBoxModel.renderStyle.borderTop,
-        border[2] - element.renderBoxModel.renderStyle.borderRight, border[3] + element.renderBoxModel.renderStyle.borderTop,
-        border[4] - element.renderBoxModel.renderStyle.borderRight, border[5] - element.renderBoxModel.renderStyle.borderBottom,
-        border[6] + element.renderBoxModel.renderStyle.borderLeft, border[7] - element.renderBoxModel.renderStyle.borderBottom,
+        border[0] + element.renderBoxModel!.renderStyle.borderLeft, border[1] + element.renderBoxModel!.renderStyle.borderTop,
+        border[2] - element.renderBoxModel!.renderStyle.borderRight, border[3] + element.renderBoxModel!.renderStyle.borderTop,
+        border[4] - element.renderBoxModel!.renderStyle.borderRight, border[5] - element.renderBoxModel!.renderStyle.borderBottom,
+        border[6] + element.renderBoxModel!.renderStyle.borderLeft, border[7] - element.renderBoxModel!.renderStyle.borderBottom,
       ];
       List<double> content = [
-        padding[0] + element.renderBoxModel.renderStyle.paddingLeft, padding[1] + element.renderBoxModel.renderStyle.paddingTop,
-        padding[2] - element.renderBoxModel.renderStyle.paddingRight, padding[3] + element.renderBoxModel.renderStyle.paddingTop,
-        padding[4] - element.renderBoxModel.renderStyle.paddingRight, padding[5] - element.renderBoxModel.renderStyle.paddingBottom,
-        padding[6] + element.renderBoxModel.renderStyle.paddingLeft, padding[7] - element.renderBoxModel.renderStyle.paddingBottom,
+        padding[0] + element.renderBoxModel!.renderStyle.paddingLeft, padding[1] + element.renderBoxModel!.renderStyle.paddingTop,
+        padding[2] - element.renderBoxModel!.renderStyle.paddingRight, padding[3] + element.renderBoxModel!.renderStyle.paddingTop,
+        padding[4] - element.renderBoxModel!.renderStyle.paddingRight, padding[5] - element.renderBoxModel!.renderStyle.paddingBottom,
+        padding[6] + element.renderBoxModel!.renderStyle.paddingLeft, padding[7] - element.renderBoxModel!.renderStyle.paddingBottom,
       ];
       List<double> margin = [
-        border[0] - element.renderBoxModel.renderStyle.marginLeft.length, border[1] - element.renderBoxModel.renderStyle.marginTop.length,
-        border[2] + element.renderBoxModel.renderStyle.marginRight.length, border[3] - element.renderBoxModel.renderStyle.marginTop.length,
-        border[4] + element.renderBoxModel.renderStyle.marginRight.length, border[5] + element.renderBoxModel.renderStyle.marginBottom.length,
-        border[6] - element.renderBoxModel.renderStyle.marginLeft.length, border[7] + element.renderBoxModel.renderStyle.marginBottom.length,
+        border[0] - element.renderBoxModel!.renderStyle.marginLeft.length!, border[1] - element.renderBoxModel!.renderStyle.marginTop.length!,
+        border[2] + element.renderBoxModel!.renderStyle.marginRight.length!, border[3] - element.renderBoxModel!.renderStyle.marginTop.length!,
+        border[4] + element.renderBoxModel!.renderStyle.marginRight.length!, border[5] + element.renderBoxModel!.renderStyle.marginBottom.length!,
+        border[6] - element.renderBoxModel!.renderStyle.marginLeft.length!, border[7] + element.renderBoxModel!.renderStyle.marginBottom.length!,
       ];
 
       BoxModel boxModel = BoxModel(
@@ -170,7 +170,7 @@ class InspectorNode extends JSONEncodable {
   /// Optional. The id of the parent node if any.
   int get parentId {
     if (referencedNode.parent != null) {
-      return referencedNode.parent.targetId;
+      return referencedNode.parent!.targetId;
     } else {
       return 0;
     }
@@ -188,15 +188,15 @@ class InspectorNode extends JSONEncodable {
   String get nodeName => referencedNode.nodeName.toLowerCase();
 
   /// Node's localName.
-  String localName;
+  String? localName;
 
   /// Node's nodeValue.
   String get nodeValue {
     if (referencedNode.nodeType == NodeType.TEXT_NODE) {
-      TextNode textNode = referencedNode;
+      TextNode textNode = referencedNode as TextNode;
       return textNode.data;
     } else if (referencedNode.nodeType == NodeType.COMMENT_NODE) {
-      Comment comment = referencedNode;
+      Comment comment = referencedNode as Comment;
       return comment.data;
     } else {
       return '';
@@ -205,10 +205,10 @@ class InspectorNode extends JSONEncodable {
 
   int get childNodeCount => referencedNode.childNodes.length;
 
-  List<String> get attributes {
+  List<String>? get attributes {
     if (referencedNode.nodeType == NodeType.ELEMENT_NODE) {
       List<String> attrs = [];
-      Element el = referencedNode;
+      Element el = referencedNode as Element;
       el.properties.forEach((key, value) {
         attrs.add(key);
         attrs.add(value.toString());
@@ -237,12 +237,12 @@ class InspectorNode extends JSONEncodable {
 }
 
 class BoxModel extends JSONEncodable {
-  List<double> content;
-  List<double> padding;
-  List<double> border;
-  List<double> margin;
-  int width;
-  int height;
+  List<double>? content;
+  List<double>? padding;
+  List<double>? border;
+  List<double>? margin;
+  int? width;
+  int? height;
 
   BoxModel({ this.content, this.padding, this.border, this.margin, this.width, this.height });
 
@@ -260,10 +260,10 @@ class BoxModel extends JSONEncodable {
 }
 
 class Rect extends JSONEncodable {
-  num x;
-  num y;
-  num width;
-  num height;
+  num? x;
+  num? y;
+  num? width;
+  num? height;
 
   Rect({ this.x, this.y, this.width, this.height });
 

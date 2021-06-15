@@ -11,14 +11,14 @@ class InspectOverlayModule extends UIInspectorModule {
   @override
   String get name => 'Overlay';
 
-  ElementManager get elementManager => devTool.controller.view.elementManager;
-  InspectOverlayModule(ChromeDevToolsService devTool): super(devTool);
+  ElementManager get elementManager => devTool!.controller!.view.elementManager;
+  InspectOverlayModule(ChromeDevToolsService? devTool): super(devTool);
 
   @override
-  void receiveFromFrontend(int id, String method, Map<String, dynamic> params) {
+  void receiveFromFrontend(int? id, String method, Map<String, dynamic>? params) {
     switch (method) {
       case 'highlightNode':
-        onHighlightNode(id, params);
+        onHighlightNode(id, params!);
         break;
       case 'hideHighlight':
         onHideHighlight(id);
@@ -26,13 +26,13 @@ class InspectOverlayModule extends UIInspectorModule {
     }
   }
 
-  Element _highlightElement;
+  Element? _highlightElement;
   /// https://chromedevtools.github.io/devtools-protocol/tot/Overlay/#method-highlightNode
-  void onHighlightNode(int id, Map<String, dynamic> params) {
+  void onHighlightNode(int? id, Map<String, dynamic> params) {
     _highlightElement?.debugHideHighlight();
 
     int nodeId = params['nodeId'];
-    Element element = elementManager.getEventTargetByTargetId<Element>(nodeId);
+    Element? element = elementManager.getEventTargetByTargetId<Element>(nodeId);
 
     if (element != null) {
       element.debugHighlight();
@@ -41,7 +41,7 @@ class InspectOverlayModule extends UIInspectorModule {
     sendToFrontend(id, null);
   }
 
-  void onHideHighlight(int id) {
+  void onHideHighlight(int? id) {
     _highlightElement?.debugHideHighlight();
     _highlightElement = null;
     sendToFrontend(id, null);

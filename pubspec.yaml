@@ -1,11 +1,11 @@
 name: kraken_devtools
 description: A kraken plugin which open a service to support Chrome DevTools for debugging.
-version: 0.1.2+2
+version: 0.2.0-dev.1
 author: Kraken Team
 homepage: https://openkraken.com
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
+  sdk: '>=2.12.0 <3.0.0'
   flutter: ">=1.20.0"
 
 # dependency_overrides:
@@ -15,11 +15,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  jsc: ^0.1.4
-  ffi: ^0.1.3
-  kraken: ^0.7.2+4
-  meta: ^1.1.6
-  path: ^1.6.4
+  jsc: ^0.2.0
+  ffi: ^1.1.1
+  kraken: ^0.8.0-dev.1
+  meta: ^1.3.0
+  path: ^1.8.0
 
 dev_dependencies:
   flutter_test:

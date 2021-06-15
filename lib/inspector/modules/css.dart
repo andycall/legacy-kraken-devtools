@@ -2,7 +2,6 @@ import 'package:kraken_devtools/kraken_devtools.dart';
 import 'package:flutter/rendering.dart';
 import 'package:kraken/css.dart';
 import 'package:kraken/dom.dart';
-import 'package:meta/meta.dart';
 import '../module.dart';
 import '../ui_inspector.dart';
 
@@ -10,33 +9,33 @@ const int INLINED_STYLESHEET_ID = 1;
 const String ZERO_PX = '0px';
 
 class InspectCSSModule extends UIInspectorModule {
-  ElementManager get elementManager => devTool.controller.view.elementManager;
-  InspectCSSModule(ChromeDevToolsService devTool): super(devTool);
+  ElementManager get elementManager => devTool!.controller!.view.elementManager;
+  InspectCSSModule(ChromeDevToolsService? devTool): super(devTool);
 
   @override
   String get name => 'CSS';
 
   @override
-  void receiveFromFrontend(int id, String method, Map<String, dynamic> params) {
+  void receiveFromFrontend(int? id, String method, Map<String, dynamic>? params) {
     switch (method) {
       case 'getMatchedStylesForNode':
-        handleGetMatchedStylesForNode(id, params);
+        handleGetMatchedStylesForNode(id, params!);
         break;
       case 'getComputedStyleForNode':
-        handleGetComputedStyleForNode(id, params);
+        handleGetComputedStyleForNode(id, params!);
         break;
       case 'getInlineStylesForNode':
-        handleGetInlineStylesForNode(id, params);
+        handleGetInlineStylesForNode(id, params!);
         break;
       case 'setStyleTexts':
-        handleSetStyleTexts(id, params);
+        handleSetStyleTexts(id, params!);
         break;
     }
   }
 
-  void handleGetMatchedStylesForNode(int id, Map<String, dynamic> params) {
+  void handleGetMatchedStylesForNode(int? id, Map<String, dynamic> params) {
     int nodeId = params['nodeId'];
-    Element element = elementManager.getEventTargetByTargetId<Element>(nodeId);
+    Element? element = elementManager.getEventTargetByTargetId<Element>(nodeId);
 
     if (element != null) {
       MatchedStyles matchedStyles = MatchedStyles(
@@ -46,9 +45,9 @@ class InspectCSSModule extends UIInspectorModule {
     }
   }
 
-  void handleGetComputedStyleForNode(int id, Map<String, dynamic> params) {
+  void handleGetComputedStyleForNode(int? id, Map<String, dynamic> params) {
     int nodeId = params['nodeId'];
-    Element element = elementManager.getEventTargetByTargetId<Element>(nodeId);
+    Element? element = elementManager.getEventTargetByTargetId<Element>(nodeId);
 
     if (element != null) {
       ComputedStyle computedStyle = ComputedStyle(
@@ -60,9 +59,9 @@ class InspectCSSModule extends UIInspectorModule {
 
   // Returns the styles defined inline (explicitly in the "style" attribute and
   // implicitly, using DOM attributes) for a DOM node identified by nodeId.
-  void handleGetInlineStylesForNode(int id, Map<String, dynamic> params) {
+  void handleGetInlineStylesForNode(int? id, Map<String, dynamic> params) {
     int nodeId = params['nodeId'];
-    Element element = elementManager.getEventTargetByTargetId<Element>(nodeId);
+    Element? element = elementManager.getEventTargetByTargetId<Element>(nodeId);
 
     if (element != null) {
       InlinedStyle inlinedStyle = InlinedStyle(
@@ -74,19 +73,19 @@ class InspectCSSModule extends UIInspectorModule {
     }
   }
 
-  void handleSetStyleTexts(int id, Map<String, dynamic> params) {
+  void handleSetStyleTexts(int? id, Map<String, dynamic> params) {
     List edits = params['edits'];
-    List<CSSStyle> styles = [];
+    List<CSSStyle?> styles = [];
     double viewportWidth = elementManager.viewportWidth;
     double viewportHeight = elementManager.viewportHeight;
     Size viewportSize = Size(viewportWidth, viewportHeight);
 
-    for (Map<String, dynamic> edit in edits) {
+    for (Map<String, dynamic> edit in edits as Iterable<Map<String, dynamic>>) {
       // Use styleSheetId to identity element.
       int nodeId = edit['styleSheetId'];
       String text = edit['text'] ?? '';
       List<String> texts = text.split(';');
-      Element element = elementManager.getEventTargetByTargetId<Element>(nodeId);
+      Element? element = elementManager.getEventTargetByTargetId<Element>(nodeId);
       if (element != null) {
         for (String kv in texts) {
           kv = kv.trim();
@@ -108,7 +107,7 @@ class InspectCSSModule extends UIInspectorModule {
     }));
   }
 
-  static CSSStyle buildInlineStyle(CSSStyleDeclaration style) {
+  static CSSStyle? buildInlineStyle(CSSStyleDeclaration? style) {
     if (style == null) {
       return null;
     }
@@ -137,7 +136,7 @@ class InspectCSSModule extends UIInspectorModule {
     return CSSStyle(
       // Absent for user agent stylesheet and user-specified stylesheet rules.
       // Use eventTarget id to identity which element the rule belongs to.
-      styleSheetId: style.target.targetId,
+      styleSheetId: style.target!.targetId,
       cssProperties: cssProperties,
       shorthandEntries: <ShorthandEntry>[],
       cssText: cssText,
@@ -159,12 +158,12 @@ class InspectCSSModule extends UIInspectorModule {
       propertyName = kebabize(propertyName);
 
       if (CSSLength.isLength(propertyValue)) {
-        double len = CSSLength.toDisplayPortValue(propertyValue, viewportSize);
+        double? len = CSSLength.toDisplayPortValue(propertyValue, viewportSize);
         propertyValue = len == 0 ? '0' : '${len}px';
       }
 
       if (propertyName == DISPLAY) {
-        propertyValue ??= element.defaultDisplay;
+        propertyValue = element.defaultDisplay;
       }
 
       computedStyle.add(CSSComputedStyleProperty(name: propertyName, value: propertyValue));
@@ -184,8 +183,8 @@ class InspectCSSModule extends UIInspectorModule {
     }
 
     // Calc computed size.
-    Map<String, dynamic> boundingClientRect = element.boundingClientRect?.toJSON();
-    boundingClientRect?.forEach((String name, value) {
+    Map<String, dynamic> boundingClientRect = element.boundingClientRect.toJSON();
+    boundingClientRect.forEach((String name, value) {
       computedStyle.add(CSSComputedStyleProperty(name: name, value: '${value}px'));
     });
 
@@ -193,7 +192,7 @@ class InspectCSSModule extends UIInspectorModule {
   }
 
   // Kraken not supports attribute style for now.
-  static CSSStyle buildAttributesStyle(Map<String, dynamic> properties) {
+  static CSSStyle? buildAttributesStyle(Map<String, dynamic> properties) {
     return null;
   }
 }
@@ -209,12 +208,12 @@ class MatchedStyles extends JSONEncodable {
     this.cssKeyframesRules,
   });
 
-  CSSStyle inlineStyle;
-  CSSStyle attributesStyle;
-  List<RuleMatch> matchedCSSRules;
-  List<PseudoElementMatches> pseudoElements;
-  List<InheritedStyleEntry> inherited;
-  List<CSSKeyframesRule> cssKeyframesRules;
+  CSSStyle? inlineStyle;
+  CSSStyle? attributesStyle;
+  List<RuleMatch>? matchedCSSRules;
+  List<PseudoElementMatches>? pseudoElements;
+  List<InheritedStyleEntry>? inherited;
+  List<CSSKeyframesRule>? cssKeyframesRules;
 
   Map toJson() {
     return {
@@ -229,16 +228,16 @@ class MatchedStyles extends JSONEncodable {
 }
 
 class CSSStyle extends JSONEncodable {
-  int styleSheetId;
+  int? styleSheetId;
   List<CSSProperty> cssProperties;
   List<ShorthandEntry> shorthandEntries;
-  String cssText;
-  SourceRange range;
+  String? cssText;
+  SourceRange? range;
 
   CSSStyle({
     this.styleSheetId,
-    @required this.cssProperties,
-    @required this.shorthandEntries,
+    required this.cssProperties,
+    required this.shorthandEntries,
     this.cssText,
     this.range,
   });
@@ -292,14 +291,14 @@ class CSSProperty extends JSONEncodable {
   String value;
   bool important;
   bool implicit;
-  String text;
+  String? text;
   bool parsedOk;
-  bool disabled;
-  SourceRange range;
+  bool? disabled;
+  SourceRange? range;
 
   CSSProperty({
-    @required this.name,
-    @required this.value,
+    required this.name,
+    required this.value,
     this.important = false,
     this.implicit = false,
     this.text,
@@ -313,10 +312,10 @@ class CSSProperty extends JSONEncodable {
     return {
       'name': name,
       'value': value,
-      if (important != null) 'important': important,
-      if (implicit != null) 'implicit': implicit,
-      if (text != null) 'text': text,
-      if (parsedOk != null) 'parsedOk': parsedOk,
+      'important': important,
+      'implicit': implicit,
+      'text': text,
+      'parsedOk': parsedOk,
       if (disabled != null) 'disabled': disabled,
       if (range != null) 'range': range,
     };
@@ -330,10 +329,10 @@ class SourceRange extends JSONEncodable {
   int endColumn;
 
   SourceRange({
-    @required this.startLine,
-    @required this.startColumn,
-    @required this.endLine,
-    @required this.endColumn,
+    required this.startLine,
+    required this.startColumn,
+    required this.endLine,
+    required this.endColumn,
   });
 
   @override
@@ -354,8 +353,8 @@ class ShorthandEntry extends JSONEncodable {
   bool important;
 
   ShorthandEntry({
-    @required this.name,
-    @required this.value,
+    required this.name,
+    required this.value,
     this.important = false,
   });
 
@@ -373,7 +372,7 @@ class ShorthandEntry extends JSONEncodable {
 class ComputedStyle extends JSONEncodable {
   List<CSSComputedStyleProperty> computedStyle;
 
-  ComputedStyle({ @required this.computedStyle });
+  ComputedStyle({ required this.computedStyle });
 
   @override
   Map toJson() {
@@ -388,7 +387,7 @@ class CSSComputedStyleProperty extends JSONEncodable {
   String name;
   String value;
 
-  CSSComputedStyleProperty({ @required this.name, @required this.value });
+  CSSComputedStyleProperty({ required this.name, required this.value });
 
   @override
   Map toJson() {
@@ -400,8 +399,8 @@ class CSSComputedStyleProperty extends JSONEncodable {
 }
 
 class InlinedStyle extends JSONEncodable {
-  CSSStyle inlineStyle;
-  CSSStyle attributesStyle;
+  CSSStyle? inlineStyle;
+  CSSStyle? attributesStyle;
 
   InlinedStyle({ this.inlineStyle, this.attributesStyle });
 
