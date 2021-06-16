@@ -20,5 +20,13 @@ final String kkJsEngine = Platform.environment[KRAKEN_JS_ENGINE] ??
 final String libName = 'libkraken_devtools_$kkJsEngine';
 final String nativeDynamicLibraryName = Platform.isMacOS || Platform.isIOS
     ? '$libName.dylib' : Platform.isWindows ? '$libName.dll' : '$libName.so';
-DynamicLibrary nativeDynamicLibrary =
-    DynamicLibrary.open(join(kkLibraryPath ?? (Platform.isLinux ? '\$ORIGIN' : ''), nativeDynamicLibraryName));
+
+DynamicLibrary? getDynamicLibrary() {
+  try {
+    DynamicLibrary nativeDynamicLibrary = DynamicLibrary.open(join(kkLibraryPath ?? (Platform.isLinux ? '\$ORIGIN' : ''), nativeDynamicLibraryName));
+    return nativeDynamicLibrary;
+  } catch (e) {
+    return null;
+  }
+}
+
