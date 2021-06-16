@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Publish To pun.dev
+name: Publish To pub.dev
 
 # Controls when the action will run. 
 on:
