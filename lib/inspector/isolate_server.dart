@@ -73,6 +73,8 @@ typedef NativeDispatchInspectorTask = Void Function(Int32 contextId, Pointer<Voi
 typedef DartDispatchInspectorTask = void Function(int? contextId, Pointer<Void> context, Pointer<Void> callback);
 
 void attachInspector(int contextId) {
+  DynamicLibrary? nativeDynamicLibrary = getDynamicLibrary();
+  if (nativeDynamicLibrary == null) return;
   final DartAttachInspector _attachInspector = nativeDynamicLibrary
       .lookup<NativeFunction<NativeAttachInspector>>('attachInspector')
       .asFunction();
@@ -80,6 +82,8 @@ void attachInspector(int contextId) {
 }
 
 void initInspectorServerNativeBinding(int contextId) {
+  DynamicLibrary? nativeDynamicLibrary = getDynamicLibrary();
+  if (nativeDynamicLibrary == null) return;
   final DartRegisterDartMethods _registerInspectorServerDartMethods =
       nativeDynamicLibrary
           .lookup<NativeFunction<NativeRegisterDartMethods>>(
@@ -144,7 +148,12 @@ void serverIsolateEntryPoint(SendPort isolateToMainStream) {
       } else if (data is InspectorMethodResult) {
         server!.sendToFrontend(data.id, data.result);
       } else if (data is InspectorPostTaskMessage) {
-        server!._dispatchInspectorTask(mainIsolateJSContextId, Pointer.fromAddress(data.context), Pointer.fromAddress(data.callback));
+        DynamicLibrary? nativeDynamicLibrary = getDynamicLibrary();
+        if (nativeDynamicLibrary == null) return;
+        final DartDispatchInspectorTask _dispatchInspectorTask = nativeDynamicLibrary
+            .lookup<NativeFunction<NativeDispatchInspectorTask>>('dispatchInspectorTask')
+            .asFunction();
+        _dispatchInspectorTask(mainIsolateJSContextId, Pointer.fromAddress(data.context), Pointer.fromAddress(data.callback));
       } else if (data is InspectorReload) {
         attachInspector(data.contextId);
       }
@@ -185,10 +194,6 @@ class IsolateInspectorServer {
   void registerModule(IsolateInspectorModule module) {
     moduleRegistrar[module.name] = module;
   }
-
-  final DartDispatchInspectorTask _dispatchInspectorTask = nativeDynamicLibrary
-      .lookup<NativeFunction<NativeDispatchInspectorTask>>('dispatchInspectorTask')
-      .asFunction();
 
   /// InspectServer has connected frontend.
   bool get connected => _ws != null;
