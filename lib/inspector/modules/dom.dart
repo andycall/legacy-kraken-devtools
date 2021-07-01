@@ -44,11 +44,11 @@ class InspectDOMModule extends UIInspectorModule {
     rootRenderObject.hitTest(result, position: Offset(x.toDouble(), y.toDouble()));
     if (result.path.first != null && result.path.first.target is RenderBoxModel) {
       RenderBoxModel lastHitRenderBoxModel = result.path.first.target as RenderBoxModel;
-      int targetId = lastHitRenderBoxModel.targetId;
+      int hashCode = lastHitRenderBoxModel.hashCode;
       sendToFrontend(id, JSONEncodableMap({
-        'backendId': targetId,
+        'backendId': hashCode,
         'frameId': DEFAULT_FRAME_ID,
-        'nodeId': targetId,
+        'nodeId': hashCode,
       }));
     } else {
       sendToFrontend(id, null);
