@@ -1,3 +1,11 @@
+## 0.2.1
+
+* add protection when platform not supported
+
+## 0.2.0
+
+* upgrade to kraken 0.8.0
+
 ## 0.1.2+1
 
 * fix: flutter: NoSuchMethodError: The method 'send' was called on null https://github.com/openkraken/kraken/issues/237
