@@ -26,6 +26,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: 'kraken-npbt clean'
         run: kraken-npbt clean
+      - name: 'flutter pub get'
+        run: flutter pub get
       - name: 'kraken-npbt configure'
         run: kraken-npbt configure
       - name: 'kraken-npbt build'
