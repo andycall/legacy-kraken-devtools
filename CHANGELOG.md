@@ -1,3 +1,7 @@
+## 0.3.0
+
+* chore: modify toDisplayPortValue params according to kraken 0.8.1 change.
+
 ## 0.2.2
 
 * chore: get targetId from elementDelegate of renderBoxModel due to targetId removal in renderBoxModel.

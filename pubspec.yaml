@@ -1,6 +1,6 @@
 name: kraken_devtools
 description: A kraken plugin which open a service to support Chrome DevTools for debugging.
-version: 0.2.2
+version: 0.3.0
 author: Kraken Team
 homepage: https://openkraken.com
 
