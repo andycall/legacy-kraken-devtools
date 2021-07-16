@@ -2,6 +2,7 @@ import 'package:kraken_devtools/kraken_devtools.dart';
 import 'package:flutter/rendering.dart';
 import 'package:kraken/css.dart';
 import 'package:kraken/dom.dart';
+import 'package:kraken/rendering.dart';
 import '../module.dart';
 import '../ui_inspector.dart';
 
@@ -152,13 +153,25 @@ class InspectCSSModule extends UIInspectorModule {
     double viewportHeight = elementManager.viewportHeight;
     Size viewportSize = Size(viewportWidth, viewportHeight);
 
+    Element rootElement = elementManager.viewportElement;
+    RenderBoxModel rootBoxModel = rootElement.renderBoxModel!;
+    double rootFontSize = rootBoxModel.renderStyle.fontSize;
+    RenderStyle renderStyle = element.renderBoxModel!.renderStyle;
+    double fontSize = renderStyle.fontSize;
+
     for (int i = 0; i < style.length; i++) {
       String propertyName = style.item(i);
       String propertyValue = style.getPropertyValue(propertyName);
       propertyName = kebabize(propertyName);
 
       if (CSSLength.isLength(propertyValue)) {
-        double? len = CSSLength.toDisplayPortValue(propertyValue, viewportSize);
+        double? len = CSSLength.toDisplayPortValue(
+          propertyValue,
+          viewportSize: viewportSize,
+          rootFontSize: rootFontSize,
+          fontSize: fontSize
+        );
+
         propertyValue = len == 0 ? '0' : '${len}px';
       }
 
