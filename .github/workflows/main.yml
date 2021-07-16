@@ -18,24 +18,21 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
+      - name: 'kraken-npbt clean'
+        run: kraken-npbt clean
+      - name: 'flutter pub get'
+        run: flutter pub get
+      - name: 'kraken-npbt configure'
+        run: kraken-npbt configure
+      - name: 'kraken-npbt build'
+        run: kraken-npbt build --no-ios
       # Runs a single command using the runners shell
-      - name: Publish Dart/Flutter package
-        # You may pin to the exact commit or the version.
-        # uses: sakebook/actions-flutter-pub-publisher@7112915a1a834881d4c98ef7af12f3456e5c79c7
-        uses: sakebook/actions-flutter-pub-publisher@v1.3.1
-        with:
-          # Google Account credential
-          credential: ${{secrets.PUB_CREDIT_JSON}}
-          # (Optional) Publish packages type. (default: true)
-          flutter_package: true
-          # (Optional) Skip test (default: false)
-          skip_test: true
-          # (Optional) Package directory (default: ".")
+      - name: 'publish to pub.dev'
+        run: flutter pub publish --force
 

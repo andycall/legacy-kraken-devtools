@@ -1,3 +1,7 @@
+## 0.2.2
+
+* chore: get targetId from elementDelegate of renderBoxModel due to targetId removal in renderBoxModel.
+
 ## 0.2.1
 
 * add protection when platform not supported
