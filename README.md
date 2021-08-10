@@ -1,4 +1,4 @@
-# Kraken Devtools
+# Kraken Devtools [![pub package](https://img.shields.io/pub/v/kraken_devtools.svg)](https://pub.dev/packages/kraken_devtools)
 
 A kraken plugin which starting a service to provide Chrome DevTools support.
 
