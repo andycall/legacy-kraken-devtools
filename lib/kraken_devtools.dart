@@ -64,10 +64,10 @@ class ChromeDevToolsService extends DevToolsService {
   @override
   void dispose() {
     _uiInspector?.dispose();
+    _contextDevToolMap.remove(controller!.view.contextId);
     _controller = null;
     _isolateServerPort = null;
     _isolateServerIsolate.kill();
-    _contextDevToolMap.remove(controller!.view.contextId);
   }
 
   @override
