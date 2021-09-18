@@ -1,3 +1,7 @@
+## 0.3.1
+
+* chore: disable kraken_devtools for armv7 android.
+
 ## 0.3.0
 
 * chore: modify toDisplayPortValue params according to kraken 0.8.1 change.
