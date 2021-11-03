@@ -163,9 +163,9 @@ void serverIsolateEntryPoint(SendPort isolateToMainStream) {
 
 class IsolateInspectorServer {
   IsolateInspectorServer(this.port, this.address, this.bundleURL) {
-    registerModule(InspectRuntimeModule(this));
-    registerModule(InspectDebuggerModule(this));
-    registerModule(InspectorLogModule(this));
+    // registerModule(InspectRuntimeModule(this));
+    // registerModule(InspectDebuggerModule(this));
+    // registerModule(InspectorLogModule(this));
   }
 
   // final Inspector inspector;
