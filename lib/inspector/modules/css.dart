@@ -81,7 +81,7 @@ class InspectCSSModule extends UIInspectorModule {
     double viewportHeight = elementManager.viewportHeight;
     Size viewportSize = Size(viewportWidth, viewportHeight);
 
-    for (Map<String, dynamic> edit in edits as Iterable<Map<String, dynamic>>) {
+    for (Map<String, dynamic> edit in edits) {
       // Use styleSheetId to identity element.
       int nodeId = edit['styleSheetId'];
       String text = edit['text'] ?? '';
@@ -156,8 +156,11 @@ class InspectCSSModule extends UIInspectorModule {
     Element rootElement = elementManager.viewportElement;
     RenderBoxModel rootBoxModel = rootElement.renderBoxModel!;
     double rootFontSize = rootBoxModel.renderStyle.fontSize;
-    RenderStyle renderStyle = element.renderBoxModel!.renderStyle;
-    double fontSize = renderStyle.fontSize;
+    double fontSize = rootFontSize;
+    if (element.renderBoxModel != null) {
+      RenderStyle renderStyle = element.renderBoxModel!.renderStyle;
+      fontSize = renderStyle.fontSize;
+    }
 
     for (int i = 0; i < style.length; i++) {
       String propertyName = style.item(i);

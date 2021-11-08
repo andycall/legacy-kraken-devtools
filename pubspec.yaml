@@ -1,6 +1,6 @@
 name: kraken_devtools
 description: A kraken plugin which open a service to support Chrome DevTools for debugging.
-version: 0.3.1
+version: 0.4.0
 author: Kraken Team
 homepage: https://openkraken.com
 
@@ -8,16 +8,11 @@ environment:
   sdk: '>=2.12.0 <3.0.0'
   flutter: ">=1.20.0"
 
-# dependency_overrides:
-#   jsc:
-#     path: ../jsc
-
 dependencies:
   flutter:
     sdk: flutter
-  jsc: ^0.2.0
   ffi: ^1.1.1
-  kraken: ^0.8.0
+  kraken: ^0.9.0
   meta: ^1.3.0
   path: ^1.8.0
 
@@ -29,17 +24,13 @@ dev_dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter.
-flutter:
-  # This section identifies this Flutter project as a plugin project.
-  # The 'pluginClass' and Android 'package' identifiers should not ordinarily
-  # be modified. They are used by the tooling to maintain consistency when
-  # adding or updating assets for this project.
-  plugin:
-    platforms:
-      android:
-        package: com.example.kraken_devtools
-        pluginClass: KrakenDevtoolsPlugin
-      ios:
-        pluginClass: KrakenDevtoolsPlugin
-      macos:
-        pluginClass: KrakenDevtoolsPlugin
+# flutter:
+#   plugin:
+#     platforms:
+#       android:
+#         package: com.example.kraken_devtools
+#         pluginClass: KrakenDevtoolsPlugin
+#       ios:
+#         pluginClass: KrakenDevtoolsPlugin
+#       macos:
+#         pluginClass: KrakenDevtoolsPlugin

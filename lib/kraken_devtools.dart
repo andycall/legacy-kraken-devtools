@@ -74,11 +74,12 @@ class ChromeDevToolsService extends DevToolsService {
   void init(KrakenController controller) {
     _contextDevToolMap[controller.view.contextId] = this;
     _controller = controller;
-    bool nativeInited = registerUIDartMethodsToCpp();
-    if (!nativeInited) {
-      print('Warning: kraken_devtools is not supported on your platform.');
-      return;
-    }
+    // @TODO: Add JS debug support for QuickJS.
+    // bool nativeInited = registerUIDartMethodsToCpp();
+    // if (!nativeInited) {
+    //   print('Warning: kraken_devtools is not supported on your platform.');
+    //   return;
+    // }
     spawnIsolateInspectorServer(this, controller);
     _uiInspector = UIInspector(this);
     controller.view.elementManager.debugDOMTreeChanged = uiInspector!.onDOMTreeChanged;
