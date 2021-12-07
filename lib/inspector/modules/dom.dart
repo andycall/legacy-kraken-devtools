@@ -42,9 +42,9 @@ class InspectDOMModule extends UIInspectorModule {
     RenderBox rootRenderObject = elementManager.getRootRenderBox();
     BoxHitTestResult result = BoxHitTestResult();
     rootRenderObject.hitTest(result, position: Offset(x.toDouble(), y.toDouble()));
-    if (result.path.first != null && result.path.first.target is RenderBoxModel) {
+    if (result.path.first.target is RenderBoxModel) {
       RenderBoxModel lastHitRenderBoxModel = result.path.first.target as RenderBoxModel;
-      int targetId = lastHitRenderBoxModel.elementDelegate.getTargetId();
+      int targetId = lastHitRenderBoxModel.renderStyle.target.targetId;
       sendToFrontend(id, JSONEncodableMap({
         'backendId': targetId,
         'frameId': DEFAULT_FRAME_ID,
@@ -95,22 +95,22 @@ class InspectDOMModule extends UIInspectorModule {
         contentBoxOffset.dx, contentBoxOffset.dy + heightWithinBorder,
       ];
       List<double> padding = [
-        border[0] + element.renderBoxModel!.renderStyle.borderLeft, border[1] + element.renderBoxModel!.renderStyle.borderTop,
-        border[2] - element.renderBoxModel!.renderStyle.borderRight, border[3] + element.renderBoxModel!.renderStyle.borderTop,
-        border[4] - element.renderBoxModel!.renderStyle.borderRight, border[5] - element.renderBoxModel!.renderStyle.borderBottom,
-        border[6] + element.renderBoxModel!.renderStyle.borderLeft, border[7] - element.renderBoxModel!.renderStyle.borderBottom,
+        border[0] + (element.renderBoxModel!.renderStyle.borderLeftWidth?.computedValue ?? 0), border[1] + (element.renderBoxModel!.renderStyle.borderTopWidth?.computedValue ?? 0),
+        border[2] - (element.renderBoxModel!.renderStyle.borderRightWidth?.computedValue ?? 0), border[3] + (element.renderBoxModel!.renderStyle.borderTopWidth?.computedValue ?? 0),
+        border[4] - (element.renderBoxModel!.renderStyle.borderRightWidth?.computedValue ?? 0), border[5] - (element.renderBoxModel!.renderStyle.borderBottomWidth?.computedValue ?? 0),
+        border[6] + (element.renderBoxModel!.renderStyle.borderLeftWidth?.computedValue ?? 0), border[7] - (element.renderBoxModel!.renderStyle.borderBottomWidth?.computedValue ?? 0),
       ];
       List<double> content = [
-        padding[0] + element.renderBoxModel!.renderStyle.paddingLeft, padding[1] + element.renderBoxModel!.renderStyle.paddingTop,
-        padding[2] - element.renderBoxModel!.renderStyle.paddingRight, padding[3] + element.renderBoxModel!.renderStyle.paddingTop,
-        padding[4] - element.renderBoxModel!.renderStyle.paddingRight, padding[5] - element.renderBoxModel!.renderStyle.paddingBottom,
-        padding[6] + element.renderBoxModel!.renderStyle.paddingLeft, padding[7] - element.renderBoxModel!.renderStyle.paddingBottom,
+        padding[0] + element.renderBoxModel!.renderStyle.paddingLeft.computedValue, padding[1] + element.renderBoxModel!.renderStyle.paddingTop.computedValue,
+        padding[2] - element.renderBoxModel!.renderStyle.paddingRight.computedValue, padding[3] + element.renderBoxModel!.renderStyle.paddingTop.computedValue,
+        padding[4] - element.renderBoxModel!.renderStyle.paddingRight.computedValue, padding[5] - element.renderBoxModel!.renderStyle.paddingBottom.computedValue,
+        padding[6] + element.renderBoxModel!.renderStyle.paddingLeft.computedValue, padding[7] - element.renderBoxModel!.renderStyle.paddingBottom.computedValue,
       ];
       List<double> margin = [
-        border[0] - element.renderBoxModel!.renderStyle.marginLeft.length!, border[1] - element.renderBoxModel!.renderStyle.marginTop.length!,
-        border[2] + element.renderBoxModel!.renderStyle.marginRight.length!, border[3] - element.renderBoxModel!.renderStyle.marginTop.length!,
-        border[4] + element.renderBoxModel!.renderStyle.marginRight.length!, border[5] + element.renderBoxModel!.renderStyle.marginBottom.length!,
-        border[6] - element.renderBoxModel!.renderStyle.marginLeft.length!, border[7] + element.renderBoxModel!.renderStyle.marginBottom.length!,
+        border[0] - element.renderBoxModel!.renderStyle.marginLeft.computedValue, border[1] - element.renderBoxModel!.renderStyle.marginTop.computedValue,
+        border[2] + element.renderBoxModel!.renderStyle.marginRight.computedValue, border[3] - element.renderBoxModel!.renderStyle.marginTop.computedValue,
+        border[4] + element.renderBoxModel!.renderStyle.marginRight.computedValue, border[5] + element.renderBoxModel!.renderStyle.marginBottom.computedValue,
+        border[6] - element.renderBoxModel!.renderStyle.marginLeft.computedValue, border[7] + element.renderBoxModel!.renderStyle.marginBottom.computedValue,
       ];
 
       BoxModel boxModel = BoxModel(
@@ -169,8 +169,8 @@ class InspectorNode extends JSONEncodable {
 
   /// Optional. The id of the parent node if any.
   int get parentId {
-    if (referencedNode.parent != null) {
-      return referencedNode.parent!.targetId;
+    if (referencedNode.parentNode != null) {
+      return referencedNode.parentNode!.targetId;
     } else {
       return 0;
     }

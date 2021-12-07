@@ -8,6 +8,8 @@ import '../ui_inspector.dart';
 
 const int INLINED_STYLESHEET_ID = 1;
 const String ZERO_PX = '0px';
+RegExp _kebabCaseReg = RegExp(r'[A-Z]');
+RegExp _camelCaseReg = RegExp(r'-(\w)');
 
 class InspectCSSModule extends UIInspectorModule {
   ElementManager get elementManager => devTool!.controller!.view.elementManager;
@@ -37,10 +39,9 @@ class InspectCSSModule extends UIInspectorModule {
   void handleGetMatchedStylesForNode(int? id, Map<String, dynamic> params) {
     int nodeId = params['nodeId'];
     Element? element = elementManager.getEventTargetByTargetId<Element>(nodeId);
-
     if (element != null) {
       MatchedStyles matchedStyles = MatchedStyles(
-        inlineStyle: buildInlineStyle(element.style),
+        inlineStyle: buildInlineStyle(element),
       );
       sendToFrontend(id, matchedStyles);
     }
@@ -66,10 +67,9 @@ class InspectCSSModule extends UIInspectorModule {
 
     if (element != null) {
       InlinedStyle inlinedStyle = InlinedStyle(
-        inlineStyle: buildInlineStyle(element.style),
+        inlineStyle: buildInlineStyle(element),
         attributesStyle: buildAttributesStyle(element.properties),
       );
-
       sendToFrontend(id, inlinedStyle);
     }
   }
@@ -77,10 +77,9 @@ class InspectCSSModule extends UIInspectorModule {
   void handleSetStyleTexts(int? id, Map<String, dynamic> params) {
     List edits = params['edits'];
     List<CSSStyle?> styles = [];
-    double viewportWidth = elementManager.viewportWidth;
-    double viewportHeight = elementManager.viewportHeight;
-    Size viewportSize = Size(viewportWidth, viewportHeight);
 
+    // @TODO: diff the inline style edits.
+    // @TODO: support comments for inline style.
     for (Map<String, dynamic> edit in edits) {
       // Use styleSheetId to identity element.
       int nodeId = edit['styleSheetId'];
@@ -94,10 +93,10 @@ class InspectCSSModule extends UIInspectorModule {
           if (_kv.length == 2) {
             String name = _kv[0].trim();
             String value = _kv[1].trim();
-            element.style.setProperty(camelize(name), value, viewportSize);
+            element.setInlineStyle(_camelize(name), value);
           }
         }
-        styles.add(buildInlineStyle(element.style));
+        styles.add(buildInlineStyle(element));
       } else {
         styles.add(null);
       }
@@ -108,18 +107,13 @@ class InspectCSSModule extends UIInspectorModule {
     }));
   }
 
-  static CSSStyle? buildInlineStyle(CSSStyleDeclaration? style) {
-    if (style == null) {
-      return null;
-    }
-
+  static CSSStyle? buildInlineStyle(Element element) {
     List<CSSProperty> cssProperties = [];
     String cssText = '';
-    for (int i = 0; i < style.length; i++) {
-      String name = style.item(i);
-      String kebabName = kebabize(name);
-      String value = style.getPropertyValue(name);
-      String _cssText = '$kebabName: $value';
+    element.inlineStyle.forEach((key, value) {
+      String kebabName = _kebabize(key);
+      String propertyValue = value.toString();
+      String _cssText = '$kebabName: $propertyValue';
       CSSProperty cssProperty = CSSProperty(
         name: kebabName,
         value: value,
@@ -132,12 +126,12 @@ class InspectCSSModule extends UIInspectorModule {
       );
       cssText += '$_cssText; ';
       cssProperties.add(cssProperty);
-    }
+    });
 
     return CSSStyle(
       // Absent for user agent stylesheet and user-specified stylesheet rules.
       // Use eventTarget id to identity which element the rule belongs to.
-      styleSheetId: style.target!.targetId,
+      styleSheetId: element.targetId,
       cssProperties: cssProperties,
       shorthandEntries: <ShorthandEntry>[],
       cssText: cssText,
@@ -145,57 +139,95 @@ class InspectCSSModule extends UIInspectorModule {
     );
   }
 
+  static String resolveCSSDisplayString(CSSDisplay display) {
+    switch (display) {
+      case CSSDisplay.none:
+        return 'none';
+      case CSSDisplay.sliver:
+        return 'sliver';
+      case CSSDisplay.block:
+        return 'block';
+      case CSSDisplay.inlineBlock:
+        return 'inline-block';
+      case CSSDisplay.flex:
+        return 'flex';
+      case CSSDisplay.inlineFlex:
+        return 'inline-flex';
+      case CSSDisplay.inline:
+      default:
+        return 'inline';
+    }
+  }
+
+  static String _resolveCSSLengthType(CSSLengthType type) {
+    switch (type) {
+      case CSSLengthType.PX:
+        return 'px';
+      case CSSLengthType.EM:
+        return 'em';
+      case CSSLengthType.REM:
+        return 'rem';
+      case CSSLengthType.VH:
+        return 'vh';
+      case CSSLengthType.VW:
+        return 'vw';
+      case CSSLengthType.VMIN:
+        return 'vmin';
+      case CSSLengthType.VMAX:
+        return 'vmax';
+      case CSSLengthType.PERCENTAGE:
+        return '%';
+      case CSSLengthType.UNKNOWN:
+        return '';
+      case CSSLengthType.AUTO:
+        return 'auto';
+      case CSSLengthType.NONE:
+        return 'none';
+      case CSSLengthType.NORMAL:
+        return 'normal';
+      case CSSLengthType.INITIAL:
+        return 'initial';
+    }
+  }
+
   static List<CSSComputedStyleProperty> buildComputedStyle(Element element) {
     List<CSSComputedStyleProperty> computedStyle = [];
     CSSStyleDeclaration style = element.style;
-    ElementManager elementManager = element.elementManager;
-    double viewportWidth = elementManager.viewportWidth;
-    double viewportHeight = elementManager.viewportHeight;
-    Size viewportSize = Size(viewportWidth, viewportHeight);
-
-    Element rootElement = elementManager.viewportElement;
-    RenderBoxModel rootBoxModel = rootElement.renderBoxModel!;
-    double rootFontSize = rootBoxModel.renderStyle.fontSize;
-    double fontSize = rootFontSize;
-    if (element.renderBoxModel != null) {
-      RenderStyle renderStyle = element.renderBoxModel!.renderStyle;
-      fontSize = renderStyle.fontSize;
-    }
+    RenderStyle? renderStyle = element.renderStyle;
 
     for (int i = 0; i < style.length; i++) {
       String propertyName = style.item(i);
       String propertyValue = style.getPropertyValue(propertyName);
-      propertyName = kebabize(propertyName);
+      propertyName = _kebabize(propertyName);
 
       if (CSSLength.isLength(propertyValue)) {
-        double? len = CSSLength.toDisplayPortValue(
+        CSSLengthValue? len = CSSLength.resolveLength(
           propertyValue,
-          viewportSize: viewportSize,
-          rootFontSize: rootFontSize,
-          fontSize: fontSize
+          renderStyle,
+          propertyName,
         );
 
-        propertyValue = len == 0 ? '0' : '${len}px';
+        propertyValue = len == null ? '0' : '${len.computedValue}${_resolveCSSLengthType(len.type)}';
       }
 
       if (propertyName == DISPLAY) {
-        propertyValue = element.defaultDisplay;
+        propertyValue = resolveCSSDisplayString(element.renderStyle.display);
       }
 
       computedStyle.add(CSSComputedStyleProperty(name: propertyName, value: propertyValue));
     }
 
     if (!style.contains(BORDER_TOP_STYLE)) {
-      computedStyle.add(CSSComputedStyleProperty(name: kebabize(BORDER_TOP_STYLE), value: ZERO_PX));
+      computedStyle.add(CSSComputedStyleProperty(name: _kebabize(BORDER_TOP_STYLE), value: ZERO_PX));
     }
     if (!style.contains(BORDER_RIGHT_STYLE)) {
-      computedStyle.add(CSSComputedStyleProperty(name: kebabize(BORDER_RIGHT_STYLE), value: ZERO_PX));
+      computedStyle.add(CSSComputedStyleProperty(name: _kebabize(BORDER_RIGHT_STYLE), value: ZERO_PX));
     }
     if (!style.contains(BORDER_BOTTOM_STYLE)) {
-      computedStyle.add(CSSComputedStyleProperty(name: kebabize(BORDER_BOTTOM_STYLE), value: ZERO_PX));
+      computedStyle.add(CSSComputedStyleProperty(name: _kebabize(BORDER_BOTTOM_STYLE), value: ZERO_PX));
     }
     if (!style.contains(BORDER_LEFT_STYLE)) {
-      computedStyle.add(CSSComputedStyleProperty(name: kebabize(BORDER_LEFT_STYLE), value: ZERO_PX));
+      computedStyle.add(CSSComputedStyleProperty(name: _kebabize(BORDER_LEFT_STYLE), value: ZERO_PX));
     }
 
     // Calc computed size.
@@ -427,4 +459,17 @@ class InlinedStyle extends JSONEncodable {
       if (attributesStyle != null) 'attributesStyle': attributesStyle,
     };
   }
+}
+
+// aB to a-b
+String _kebabize(String str) {
+  return str.replaceAllMapped(_kebabCaseReg, (match) => '-${match[0]!.toLowerCase()}');
+}
+
+// a-b to aB
+String _camelize(String str) {
+  return str.replaceAllMapped(_camelCaseReg, (match) {
+    String subStr = match[0]!.substring(1);
+    return subStr.isNotEmpty ? subStr.toUpperCase() : '';
+  });
 }
