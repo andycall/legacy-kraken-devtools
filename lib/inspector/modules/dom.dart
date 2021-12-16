@@ -14,7 +14,7 @@ class InspectDOMModule extends UIInspectorModule {
   @override
   String get name => 'DOM';
 
-  ElementManager get elementManager => devTool!.controller!.view.elementManager;
+  Document get document => devTool!.controller!.view.document;
   InspectDOMModule(ChromeDevToolsService? devTool): super(devTool);
 
   @override
@@ -39,12 +39,12 @@ class InspectDOMModule extends UIInspectorModule {
     int x = params['x'];
     int y = params['y'];
 
-    RenderBox rootRenderObject = elementManager.getRootRenderBox();
+    RenderBox rootRenderObject = document.renderer!;
     BoxHitTestResult result = BoxHitTestResult();
     rootRenderObject.hitTest(result, position: Offset(x.toDouble(), y.toDouble()));
     if (result.path.first.target is RenderBoxModel) {
       RenderBoxModel lastHitRenderBoxModel = result.path.first.target as RenderBoxModel;
-      int targetId = lastHitRenderBoxModel.renderStyle.target.targetId;
+      int? targetId = document.controller.view.debugGetTargetIdByEventTarget(lastHitRenderBoxModel.renderStyle.target);
       sendToFrontend(id, JSONEncodableMap({
         'backendId': targetId,
         'frameId': DEFAULT_FRAME_ID,
@@ -61,7 +61,7 @@ class InspectDOMModule extends UIInspectorModule {
 
   void onSetInspectedNode(int? id, Map<String, dynamic> params) {
     int nodeId = params['nodeId'];
-    Node? node = elementManager.getEventTargetByTargetId(nodeId);
+    Node? node = document.controller.view.debugGetEventTargetById(nodeId);
     if (node != null) {
       inspectedNode = node;
     }
@@ -70,7 +70,7 @@ class InspectDOMModule extends UIInspectorModule {
 
   /// https://chromedevtools.github.io/devtools-protocol/tot/DOM/#method-getDocument
   void onGetDocument(int? id, String method, Map<String, dynamic>? params) {
-    Node root = elementManager.document.documentElement;
+    Node root = this.document.documentElement!;
     InspectorDocument document = InspectorDocument(
       InspectorNode(root)
     );
@@ -80,7 +80,7 @@ class InspectDOMModule extends UIInspectorModule {
 
   void onGetBoxModel(int? id, Map<String, dynamic> params) {
     int nodeId = params['nodeId'];
-    Element? element = elementManager.getEventTargetByTargetId<Element>(nodeId);
+    Element? element = document.controller.view.debugGetEventTargetById<Element>(nodeId);
 
     // BoxModel design to BorderBox in kraken.
     if (element != null && element.renderBoxModel != null && element.renderBoxModel!.hasSize) {
@@ -137,7 +137,7 @@ class InspectorDocument extends JSONEncodable {
 
   @override
   Map toJson() {
-    ElementManager elementManager = child.referencedNode.elementManager;
+    var owner = child.referencedNode.ownerDocument;
     return {
       'root': {
         'nodeId': DOCUMENT_NODE_ID,
@@ -146,8 +146,8 @@ class InspectorDocument extends JSONEncodable {
         'nodeName': '#document',
         'childNodeCount': 1,
         'children': [child.toJson()],
-        'baseURL': elementManager.controller.bundleURL,
-        'documentURL': elementManager.controller.bundleURL,
+        'baseURL': owner.controller.bundleURL,
+        'documentURL': owner.controller.bundleURL,
       },
     };
   }
@@ -165,12 +165,12 @@ class InspectorNode extends JSONEncodable {
   /// Node identifier that is passed into the rest of the DOM messages as the nodeId.
   /// Backend will only push node with given id once. It is aware of all requested nodes
   /// and will only fire DOM events for nodes known to the client.
-  int get nodeId => referencedNode.targetId;
+  int? get nodeId => referencedNode.ownerDocument.controller.view.debugGetTargetIdByEventTarget(referencedNode);
 
   /// Optional. The id of the parent node if any.
   int get parentId {
     if (referencedNode.parentNode != null) {
-      return referencedNode.parentNode!.targetId;
+      return referencedNode.ownerDocument.controller.view.debugGetTargetIdByEventTarget(referencedNode.parentNode!) ?? 0;
     } else {
       return 0;
     }

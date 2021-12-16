@@ -11,7 +11,7 @@ class InspectOverlayModule extends UIInspectorModule {
   @override
   String get name => 'Overlay';
 
-  ElementManager get elementManager => devTool!.controller!.view.elementManager;
+  Document get document => devTool!.controller!.view.document;
   InspectOverlayModule(ChromeDevToolsService? devTool): super(devTool);
 
   @override
@@ -32,7 +32,7 @@ class InspectOverlayModule extends UIInspectorModule {
     _highlightElement?.debugHideHighlight();
 
     int nodeId = params['nodeId'];
-    Element? element = elementManager.getEventTargetByTargetId<Element>(nodeId);
+    Element? element = document.controller.view.debugGetEventTargetById<Element>(nodeId);
 
     if (element != null) {
       element.debugHighlight();
