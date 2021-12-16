@@ -82,7 +82,7 @@ class ChromeDevToolsService extends DevToolsService {
     // }
     spawnIsolateInspectorServer(this, controller);
     _uiInspector = UIInspector(this);
-    controller.view.elementManager.debugDOMTreeChanged = uiInspector!.onDOMTreeChanged;
+    controller.view.debugDOMTreeChanged = uiInspector!.onDOMTreeChanged;
   }
 
   @override
@@ -93,7 +93,7 @@ class ChromeDevToolsService extends DevToolsService {
   @override
   void didReload() {
     _reloading = false;
-    controller!.view.elementManager.debugDOMTreeChanged = _uiInspector!.onDOMTreeChanged;
+    controller!.view.debugDOMTreeChanged = _uiInspector!.onDOMTreeChanged;
     _isolateServerPort!.send(InspectorReload(_controller!.view.contextId));
   }
 }

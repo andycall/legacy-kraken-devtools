@@ -186,7 +186,7 @@ enum ResourceType {
 
 class InspectPageModule extends UIInspectorModule {
 
-  ElementManager get elementManager => devTool!.controller!.view.elementManager;
+  Document get document => devTool!.controller!.view.document;
 
   InspectPageModule(ChromeDevToolsService? devTool): super(devTool);
 
@@ -210,7 +210,7 @@ class InspectPageModule extends UIInspectorModule {
         break;
       case 'getResourceContent':
         sendToFrontend(id, JSONEncodableMap({
-          'content': devTool!.controller!.view.elementManager.controller.bundle!.content,
+          'content': devTool!.controller?.bundle?.content,
           'base64Encoded': false
         }));
         break;
@@ -225,7 +225,7 @@ class InspectPageModule extends UIInspectorModule {
 
   void handleReloadPage() async {
     try {
-      await elementManager.controller.reload();
+      await document.controller.reload();
     } catch (e, stack) {
       print('Dart Error: $e\n$stack');
     }
@@ -235,7 +235,7 @@ class InspectPageModule extends UIInspectorModule {
   bool _isFramingScreenCast = false;
 
   void _frameScreenCast(Duration timeStamp) {
-    Element root = elementManager.viewportElement;
+    Element root = document.documentElement!;
     root.toBlob().then((Uint8List screenShot) {
       String encodedImage = base64Encode(screenShot);
       _lastSentSessionID = timeStamp.inMilliseconds;
@@ -244,8 +244,8 @@ class InspectPageModule extends UIInspectorModule {
           ScreencastFrameMetadata(
             0,
             1,
-            elementManager.viewportWidth,
-            elementManager.viewportHeight,
+            document.viewport.viewportSize.width,
+            document.viewport.viewportSize.height,
             root.getOffsetX(),
             root.getOffsetY(),
             timestamp: timeStamp.inMilliseconds,
